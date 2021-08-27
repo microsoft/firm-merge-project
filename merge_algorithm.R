@@ -180,7 +180,7 @@ clean_name_data <- function(raw_data, formatted_name){
 # Return: raw_data with a cleaned domain name column 'formatted_domain_name'
 #
 # Examples:
-# @clean_name_data(internal_data, internal_data$in_domain)
+# @clean_domain_name_data(internal_data, is_external = FALSE, internal_data$in_domain)
 #
 ####
 
