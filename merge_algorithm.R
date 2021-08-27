@@ -879,8 +879,8 @@ algorithm_selection <- function(nthread, iterations, internal_data, external_dat
 #
 # Parameters: 
 # @final_merge          (type: R object) - final merged data table
-# @has_city             (type: logical)  - toggle to TRUE if city data is present in both datasets (columns should be 'ext_city' and 'int_city')
-# @has_industry         (type: logical)  - toggle to TRUE if industry data is present in both datasets (columns should be 'ext_industry' and 'int_industry')
+# @has_city             (type: logical)  - toggle to TRUE if city data is present in both datasets (columns should be 'ex_city' and 'in_city')
+# @has_industry         (type: logical)  - toggle to TRUE if industry data is present in both datasets (columns should be 'ex_industry' and 'in_industry')
 # @full_partial_match   (type: numeric)  - Jaro-Winkler threshold for full to partial matches
 # @partial_little_match (type: numeric)  - Jaro-Winkler threshold for partial to little matches
 #
@@ -894,28 +894,40 @@ algorithm_selection <- function(nthread, iterations, internal_data, external_dat
 match_thresholds <- function(final_merge, has_city = FALSE, has_industry = FALSE, full_partial_match = .12, partial_little_match = .18){
   # case when only city data is present
   if(has_city == TRUE & has_industry == FALSE){
+    
+    # set definite match
+    final_merge[, def_match := ifelse(jw_match < fill_partial_match & (ex_city == in_city), TRUE, def_match)]
+    
     # create thresholds based on JW and city identifier
     final_merge[, threshold_confidence := ifelse(def_match == TRUE, "100%", 
-                                                    ifelse((jw_match > full_partial_match & (ext_city == int_city)) | jw_match <= full_partial_match, "75%", 
-                                                           ifelse(jw_match > full_partial_match & jw_match <= partial_little_match & !(ext_city == int_city), "50%",
+                                                    ifelse((jw_match > full_partial_match & (ex_city == in_city)) | jw_match <= full_partial_match, "75%", 
+                                                           ifelse(jw_match > full_partial_match & jw_match <= partial_little_match & !(ex_city == in_city), "50%",
                                                                   ifelse(jw_match > partial_little_match, "25-0%", "NA"))))]
   }
   
   # case when only industry data is present
   else if(has_city == FALSE & has_industry == TRUE){
+    
+    # set definite match
+    final_merge[, def_match := ifelse(jw_match < fill_partial_match & (ex_industry == in_industry), TRUE, def_match)]
+    
     # create thresholds based on JW and industry identifier
     final_merge[, threshold_confidence := ifelse(def_match == TRUE, "100%", 
-                                                 ifelse((jw_match > full_partial_match & (ext_industry == int_industry)) | jw_match <= full_partial_match, "75%", 
-                                                        ifelse(jw_match > full_partial_match & jw_match <= partial_little_match & !(ext_industry == int_industry), "50%",
+                                                 ifelse((jw_match > full_partial_match & (ex_industry == in_industry)) | jw_match <= full_partial_match, "75%", 
+                                                        ifelse(jw_match > full_partial_match & jw_match <= partial_little_match & !(ex_industry == in_industry), "50%",
                                                                ifelse(jw_match > partial_little_match, "25-0%", "NA"))))]
   }
   
   # case when city and industry data is present
   else if(has_city == TRUE & has_industry == TRUE){
+    
+    # set definite match
+    final_merge[, def_match := ifelse(jw_match < fill_partial_match & (ex_city == in_city | ex_industry == in_industry), TRUE, def_match)]
+    
     # create thresholds based on JW, city, and industry identifier
     final_merge[, threshold_confidence := ifelse(def_match == TRUE, "100%", 
-                                                 ifelse((jw_match > full_partial_match & (ext_city == int_city | ext_industry == int_industry)) | jw_match <= full_partial_match, "75%", 
-                                                        ifelse(jw_match > full_partial_match & jw_match <= partial_little_match & !(ext_city == int_city & ext_industry == int_industry), "50%",
+                                                 ifelse((jw_match > full_partial_match & (ex_city == in_city | ex_industry == in_industry)) | jw_match <= full_partial_match, "75%", 
+                                                        ifelse(jw_match > full_partial_match & jw_match <= partial_little_match & !(ex_city == in_city & ex_industry == in_industry), "50%",
                                                                ifelse(jw_match > partial_little_match, "25-0%", "NA"))))]
   }
   
@@ -1070,10 +1082,10 @@ external_data$external_index <- as.numeric(seq.int(nrow(external_data)))
  # if domain, city, or industry columns exist in datasets
   # 1) rename internal domain column to 'in_domain'
   # 2) rename external domain column to 'ex_domain'
-  # 3) rename internal city column to 'int_city'
-  # 4) rename external city column to 'ext_city'
-  # 5) rename internal industry column to 'int_industry'
-  # 6) rename external industry column to 'ext_industry'
+  # 3) rename internal city column to 'in_city'
+  # 4) rename external city column to 'ex_city'
+  # 5) rename internal industry column to 'in_industry'
+  # 6) rename external industry column to 'ex_industry'
  # domain name should be 'http://www.random_website.com" format
   # 1) use/modify clean_domain_name_data() function
  # names should be cleaned and properly formatted before running algorithm
