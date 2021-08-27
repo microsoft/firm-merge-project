@@ -1,14 +1,31 @@
-# Project
+# Firm Merge Project: A model to merge firm data across datasets utilizing exact & non-exact firm identifiers
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+> Please see the SUPPORT.md file for anything support related
 
-As the maintainer of this project, please make a few updates:
+By Rakan AlZagha, Mert Demirer, and Sida Peng at Microsoft Research
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+## Introduction
+The formation of this model was primarily created to aid economists in the process of merging internal and external datasets for future research purposes. However, it can be utilized for any type of 'non-exact' data-matching (not limited to just firm-level data).
+
+To accomplish this type of merge, string-matching algorithms were tested for their accuracy in matching records correctly. Ultimately, the Jaro-Winkler distance string metric was the most promising of all the algorithms tests. It is an edit-distance between two strings (much like other string-matching algorithms), but it utilizes a prefix scale that favors strings that match in the beginning. With this scaling factor, and given that most string variation occurs at the end of a string, we are able to normalize scores and choose the lowest result as an approximate match. To note, a result of 0 is an exact match, while a result of 1 indicates no similarity. 
+
+Building on this, after we receive a Jaro-Winkler similarity score that is not 0 (non-exact), we need to classify the match as definite or approximate based on exact record identifiers. In the case of matching firm-level data, we can accomplish this multiple ways. Currently, the algorithm supports this classification utilizing geographical and industry variables. 
+
+For example, say we take these two firm names. Our Jaro-Winkler score will not return a perfect match due to abbreviations, however, intuitevly we know that this is a correct matching. 
+> "Some Random Company Incorporated"
+> "Some Rand. Co. Inc."
+Suppose we have industry level information on both of these records. For the sake of this example, "Some Random Company Incorporated" is in the Consumer Products Industry and is located in Scranton, PA. With the help of the industry identifier and a Jaro-Winkler threshold, we can then classify this as a definite match. The same logic applies to geographical information and any other unique identifiers.
+
+Another way to merge 'fuzzy' data is via domain name. The benefit of this is that domain is mostly a binary way of classifiying a match as definite or approximate (given that other identifiers are corrupt/unreliable). A matched domain name indicates a definite match and is more reliable than name matching.
+
+However, there is the underlying issue of corporations and other entities having multiple domain names, migrating their domain, or even getting acquired by another company (domain now linked to the parent company). Take the example below of a consumer products company with multiple domains linked to the same HTML page. 
+> http://www.nike.com
+> http://www.nikeshoes.com
+With this issue, it was imperative to have a way of linking these two domains to the same record. To accomplish this, we added a web-scraping algorithm to extract the HTML webpage's title, which is an identifying factor to be shared by any domain pointed to the same HTML page. 
+
+The script **merge_algorithm.R** incorporates all of these methods in the same script. As a user, you will be able to select whichever combination of the algorithm you desire to run on your datasets via a caller function (see-below). 
+
+## How To Use
 
 ## Contributing
 
